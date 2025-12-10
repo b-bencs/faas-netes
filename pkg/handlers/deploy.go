@@ -78,37 +78,37 @@ func MakeDeployHandler(functionNamespace string, factory k8s.FunctionFactory, fu
 			return
 		}
 
-		// --- RT / BE orchestration integr az rtfaas-schedulerhez ---
-		podMeta := &deploymentSpec.Spec.Template.ObjectMeta
+		// // --- RT / BE orchestration integr az rtfaas-schedulerhez ---
+		// podMeta := &deploymentSpec.Spec.Template.ObjectMeta
 
-		if podMeta.Labels == nil {
-			podMeta.Labels = map[string]string{}
-		}
-		if podMeta.Annotations == nil {
-			podMeta.Annotations = map[string]string{}
-		}
+		// if podMeta.Labels == nil {
+		// 	podMeta.Labels = map[string]string{}
+		// }
+		// if podMeta.Annotations == nil {
+		// 	podMeta.Annotations = map[string]string{}
+		// }
 
-		if request.EDFParams != nil {
-			// RT fv: pidserver
-			podMeta.Labels["criticality"] = "rt"
+		// if request.EDFParams != nil {
+		// 	// RT fv: pidserver
+		// 	podMeta.Labels["criticality"] = "rt"
 
-			// amit az rtfaas-scheduler backend var:
-			// Q = runtime (ms), P = period (ms)
-			podMeta.Annotations["rt-q-ms"] = request.EDFParams.Runtime
-			podMeta.Annotations["rt-p-ms"] = request.EDFParams.Period
+		// 	// amit az rtfaas-scheduler backend var:
+		// 	// Q = runtime (ms), P = period (ms)
+		// 	podMeta.Annotations["rt-q-ms"] = request.EDFParams.Runtime
+		// 	podMeta.Annotations["rt-p-ms"] = request.EDFParams.Period
 
-			// Itt iranyitjuk at a podot a saját EDF scheduleredhez
-			deploymentSpec.Spec.Template.Spec.SchedulerName = "rtfaas-scheduler"
-		} else {
-			// minden más BE task (robot)
-			podMeta.Labels["criticality"] = "be"
-			// SchedulerName
-			deploymentSpec.Spec.Template.Spec.SchedulerName = "rtfaas-scheduler"
-		}
+		// 	// Itt iranyitjuk at a podot a saját EDF scheduleredhez
+		// 	deploymentSpec.Spec.Template.Spec.SchedulerName = "rtfaas-scheduler"
+		// } else {
+		// 	// minden más BE task (robot)
+		// 	podMeta.Labels["criticality"] = "be"
+		// 	// SchedulerName
+		// 	deploymentSpec.Spec.Template.Spec.SchedulerName = "rtfaas-scheduler"
+		// }
 
-		factory.ConfiugrePrivilegedFlag(request, deploymentSpec)
-    	factory.ConfigureReadOnlyRootFilesystem(request, deploymentSpec)
-    	factory.ConfigureContainerUserID(request, deploymentSpec)
+		// factory.ConfiugrePrivilegedFlag(request, deploymentSpec)
+    	// factory.ConfigureReadOnlyRootFilesystem(request, deploymentSpec)
+    	// factory.ConfigureContainerUserID(request, deploymentSpec)
 
 		deploymentSpec, specErr := makeDeploymentSpec(request, existingSecrets, factory)
 		if specErr != nil {
@@ -281,6 +281,7 @@ func makeDeploymentSpec(request types.FunctionDeployment, existingSecrets map[st
 		deploymentSpec.Spec.Template.Spec.SchedulerName = "rtfaas-scheduler"
 	} else {
 		podMeta.Labels["criticality"] = "be"
+		deploymentSpec.Spec.Template.Spec.SchedulerName = "rtfaas-scheduler"
 	}
 
     factory.ConfiugrePrivilegedFlag(request, deploymentSpec)
