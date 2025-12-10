@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - uses: alexellis/arkade-get@master
         with:
           helm: latest
@@ -33,7 +33,7 @@ jobs:
       - lint-chart
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - uses: alexellis/arkade-get@master
         with:
           kubeval: latest
