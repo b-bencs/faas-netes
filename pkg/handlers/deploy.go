@@ -281,7 +281,6 @@ func makeDeploymentSpec(request types.FunctionDeployment, existingSecrets map[st
 		deploymentSpec.Spec.Template.Spec.SchedulerName = "rtfaas-scheduler"
 	} else {
 		podMeta.Labels["criticality"] = "be"
-		deploymentSpec.Spec.Template.Spec.SchedulerName = "rtfaas-scheduler"
 	}
 
     factory.ConfiugrePrivilegedFlag(request, deploymentSpec)
