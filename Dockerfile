@@ -26,7 +26,7 @@ COPY . .
 RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build \
         -o faas-netes .
 
-FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine:3.21.0 AS ship
+FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine:3.23.2 AS ship
 #FROM --platform=${TARGETPLATFORM:-linux/amd64} golang:1.23.6-alpine3.21 AS ship
 LABEL org.label-schema.license="OpenFaaS CE EULA - non-commercial" \
       org.label-schema.vcs-url="https://github.com/openfaas/faas-netes" \
