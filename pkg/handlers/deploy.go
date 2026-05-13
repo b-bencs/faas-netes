@@ -9,6 +9,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -16,7 +17,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-    "errors"
 
 	"github.com/openfaas/faas-netes/pkg/k8s"
 
@@ -107,8 +107,8 @@ func MakeDeployHandler(functionNamespace string, factory k8s.FunctionFactory, fu
 		// }
 
 		// factory.ConfiugrePrivilegedFlag(request, deploymentSpec)
-    	// factory.ConfigureReadOnlyRootFilesystem(request, deploymentSpec)
-    	// factory.ConfigureContainerUserID(request, deploymentSpec)
+		// factory.ConfigureReadOnlyRootFilesystem(request, deploymentSpec)
+		// factory.ConfigureContainerUserID(request, deploymentSpec)
 
 		deploymentSpec, specErr := makeDeploymentSpec(request, existingSecrets, factory)
 		if specErr != nil {
@@ -165,9 +165,9 @@ func MakeDeployHandler(functionNamespace string, factory k8s.FunctionFactory, fu
 
 func makeDeploymentSpec(request types.FunctionDeployment, existingSecrets map[string]*corev1.Secret, factory k8s.FunctionFactory) (*appsv1.Deployment, error) {
 	envVars, err := buildEnvVars(&request)
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 
 	initialReplicas := int32p(initialReplicasCount)
 	labels := map[string]string{
@@ -264,7 +264,7 @@ func makeDeploymentSpec(request types.FunctionDeployment, existingSecrets map[st
 		},
 	}
 
-    // --- RT / BE orchestration integr az rtfaas-schedulerhez ---
+	// --- RT / BE orchestration integr az rtfaas-schedulerhez ---
 	podMeta := &deploymentSpec.Spec.Template.ObjectMeta
 
 	if podMeta.Labels == nil {
@@ -283,7 +283,7 @@ func makeDeploymentSpec(request types.FunctionDeployment, existingSecrets map[st
 		podMeta.Labels["criticality"] = "be"
 	}
 
-    factory.ConfiugrePrivilegedFlag(request, deploymentSpec)
+	factory.ConfiugrePrivilegedFlag(request, deploymentSpec)
 	factory.ConfigureReadOnlyRootFilesystem(request, deploymentSpec)
 	factory.ConfigureContainerUserID(request, deploymentSpec)
 
@@ -374,32 +374,41 @@ func buildEnvVars(request *types.FunctionDeployment) ([]corev1.EnvVar, error) {
 		})
 	}
 
-    //if request.EDFParams != nil {
-    if len(request.EDFParams.Runtime) != 0 && len(request.EDFParams.Deadline) != 0 {  //Very quick and dirty fix...
-        if len(request.EDFParams.Runtime) == 0 {
-            return envVars, errors.New("EDF Runtime is missing")
-        }
-        envVars = append(envVars, corev1.EnvVar{
-            Name:  "EDFRUNTIME",
-            Value: request.EDFParams.Runtime,
-        })
+	// EDF parameters are optional
+	hasEDF :=
+		len(request.EDFParams.Runtime) > 0 ||
+			len(request.EDFParams.Deadline) > 0 ||
+			len(request.EDFParams.Period) > 0
 
-        if len(request.EDFParams.Deadline) == 0 {
-            return envVars, errors.New("EDF Deadline is missing")
-        }
-        envVars = append(envVars, corev1.EnvVar{
-            Name:  "EDFDEADLINE",
-            Value: request.EDFParams.Deadline,
-        })
-        if len(request.EDFParams.Period) == 0 {
-            return envVars, errors.New("EDF Period is missing")
-        }
-        envVars = append(envVars, corev1.EnvVar{
-            Name:  "EDFPERIOD",
-            Value: request.EDFParams.Period,
-        })
-    }
+	if hasEDF {
 
+		if len(request.EDFParams.Runtime) == 0 {
+			return envVars, errors.New("EDF Runtime is missing")
+		}
+
+		if len(request.EDFParams.Deadline) == 0 {
+			return envVars, errors.New("EDF Deadline is missing")
+		}
+
+		if len(request.EDFParams.Period) == 0 {
+			return envVars, errors.New("EDF Period is missing")
+		}
+
+		envVars = append(envVars,
+			corev1.EnvVar{
+				Name:  "EDFRUNTIME",
+				Value: request.EDFParams.Runtime,
+			},
+			corev1.EnvVar{
+				Name:  "EDFDEADLINE",
+				Value: request.EDFParams.Deadline,
+			},
+			corev1.EnvVar{
+				Name:  "EDFPERIOD",
+				Value: request.EDFParams.Period,
+			},
+		)
+	}
 
 	sort.SliceStable(envVars, func(i, j int) bool {
 		return strings.Compare(envVars[i].Name, envVars[j].Name) == -1
