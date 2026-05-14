@@ -274,7 +274,8 @@ func makeDeploymentSpec(request types.FunctionDeployment, existingSecrets map[st
 		podMeta.Annotations = map[string]string{}
 	}
 
-	if request.EDFParams != nil {
+	hasEDF := len(request.EDFParams.Runtime) > 0 || len(request.EDFParams.Deadline) > 0 ||len(request.EDFParams.Period) > 0
+	if hasEDF {
 		podMeta.Labels["criticality"] = "rt"
 		podMeta.Annotations["rt-q-ms"] = request.EDFParams.Runtime
 		podMeta.Annotations["rt-p-ms"] = request.EDFParams.Period
@@ -418,7 +419,7 @@ func buildEnvVars(request *types.FunctionDeployment) ([]corev1.EnvVar, error) {
 }
 
 func getPrivileged(request types.FunctionDeployment) bool {
-	return request.EDFParams != nil
+	return len(request.EDFParams.Runtime) > 0 || len(request.EDFParams.Deadline) > 0 || len(request.EDFParams.Period) > 0
 }
 
 func int32p(i int32) *int32 {
